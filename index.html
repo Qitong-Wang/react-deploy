@@ -1,1 +1,129 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="shortcut icon" href="/react-deploy/favicon.ico"><meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name="theme-color" content="#000000"><link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"><link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet"><link rel="manifest" href="/react-deploy/manifest.json"><title>Shards Dashboard Lite React</title><link href="/react-deploy/static/css/1.a544db0d.chunk.css" rel="stylesheet"><link href="/react-deploy/static/css/main.baf3b112.chunk.css" rel="stylesheet"></head><body><noscript>You need to enable JavaScript to run this app.</noscript><div id="root"></div><script>!function(i){function e(e){for(var r,t,n=e[0],o=e[1],u=e[2],l=0,f=[];l<n.length;l++)t=n[l],p[t]&&f.push(p[t][0]),p[t]=0;for(r in o)Object.prototype.hasOwnProperty.call(o,r)&&(i[r]=o[r]);for(s&&s(e);f.length;)f.shift()();return c.push.apply(c,u||[]),a()}function a(){for(var e,r=0;r<c.length;r++){for(var t=c[r],n=!0,o=1;o<t.length;o++){var u=t[o];0!==p[u]&&(n=!1)}n&&(c.splice(r--,1),e=l(l.s=t[0]))}return e}var t={},p={2:0},c=[];function l(e){if(t[e])return t[e].exports;var r=t[e]={i:e,l:!1,exports:{}};return i[e].call(r.exports,r,r.exports,l),r.l=!0,r.exports}l.m=i,l.c=t,l.d=function(e,r,t){l.o(e,r)||Object.defineProperty(e,r,{enumerable:!0,get:t})},l.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},l.t=function(r,e){if(1&e&&(r=l(r)),8&e)return r;if(4&e&&"object"==typeof r&&r&&r.__esModule)return r;var t=Object.create(null);if(l.r(t),Object.defineProperty(t,"default",{enumerable:!0,value:r}),2&e&&"string"!=typeof r)for(var n in r)l.d(t,n,function(e){return r[e]}.bind(null,n));return t},l.n=function(e){var r=e&&e.__esModule?function(){return e.default}:function(){return e};return l.d(r,"a",r),r},l.o=function(e,r){return Object.prototype.hasOwnProperty.call(e,r)},l.p="/react-deploy/";var r=window.webpackJsonp=window.webpackJsonp||[],n=r.push.bind(r);r.push=e,r=r.slice();for(var o=0;o<r.length;o++)e(r[o]);var s=n;a()}([])</script><script src="/react-deploy/static/js/1.552ac0d5.chunk.js"></script><script src="/react-deploy/static/js/main.ba7cf963.chunk.js"></script></body></html>
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Force-Directed Graph</title>
+<style>
+
+.node {
+  cursor: pointer;
+  stroke: #3182bd;
+  stroke-width: 1.5px;
+}
+
+.link {
+  fill: none;
+  stroke: #9ecae1;
+  stroke-width: 1.5px;
+}
+
+</style>
+<body>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+
+var width = 960,
+    height = 500,
+    root;
+
+var force = d3.layout.force()
+    .size([width, height])
+    .on("tick", tick);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var link = svg.selectAll(".link"),
+    node = svg.selectAll(".node");
+
+d3.json("readme.json", function(error, json) {
+  if (error) throw error;
+
+  root = json;
+  update();
+});
+
+function update() {
+  var nodes = flatten(root),
+      links = d3.layout.tree().links(nodes);
+
+  // Restart the force layout.
+  force
+      .nodes(nodes)
+      .links(links)
+      .start();
+
+  // Update the links…
+  link = link.data(links, function(d) { return d.target.id; });
+
+  // Exit any old links.
+  link.exit().remove();
+
+  // Enter any new links.
+  link.enter().insert("line", ".node")
+      .attr("class", "link")
+      .attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+
+  // Update the nodes…
+  node = node.data(nodes, function(d) { return d.id; }).style("fill", color);
+
+  // Exit any old nodes.
+  node.exit().remove();
+
+  // Enter any new nodes.
+  node.enter().append("circle")
+      .attr("class", "node")
+      .attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; })
+      .attr("r", function(d) { return Math.sqrt(d.size) / 10 || 4.5; })
+      .style("fill", color)
+      .on("click", click)
+      .call(force.drag);
+}
+
+function tick() {
+  link.attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+
+  node.attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; });
+}
+
+// Color leaf nodes orange, and packages white or blue.
+function color(d) {
+  return d._children ? "#3182bd" : d.children ? "#c6dbef" : "#fd8d3c";
+}
+
+// Toggle children on click.
+function click(d) {
+  if (!d3.event.defaultPrevented) {
+    if (d.children) {
+      d._children = d.children;
+      d.children = null;
+    } else {
+      d.children = d._children;
+      d._children = null;
+    }
+    update();
+  }
+}
+
+// Returns a list of all nodes under the root.
+function flatten(root) {
+  var nodes = [], i = 0;
+
+  function recurse(node) {
+    if (node.children) node.children.forEach(recurse);
+    if (!node.id) node.id = ++i;
+    nodes.push(node);
+  }
+
+  recurse(root);
+  return nodes;
+}
+
+</script>
